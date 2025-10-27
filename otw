@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Resolve o caminho real do executável (seguindo o symlink)
+SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+
+echo ${SCRIPT_PATH}
+echo ${SCRIPT_DIR}
+
+GAME_REQ="Need put a Over The Wire game"
+
+GAME=${1?$GAME_REQ}
+shift
+
+case $GAME in
+	"bandit")
+		cd bandit
+		./bandit $@
+		;;
+	*)
+		echo "invalid game" >&2
+		exit 1
+	;;
+esac
+
+exit 0

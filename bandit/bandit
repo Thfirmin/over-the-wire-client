@@ -1,0 +1,52 @@
+#!/bin/bash
+
+if [ "$1" = "init" ]; then
+	make init
+	exit 0
+fi
+
+source "bandit.env"
+
+error()
+{
+	STATUS_CODE=$1
+	shift
+	echo $@ >&2
+	exit $STATUS_CODE
+}
+
+REQ_WARN="usage: <bandit lvl (0..33)> <connect/solve>"
+
+BANDIT_LVL=${1?$REQ_WARN}
+BANDIT_USER="bandit${BANDIT_LVL}"
+
+[ -d "${BANDIT_USER}" ] || error 1 "Invalid bandit level"
+
+BANDIT_CMD=${2?$REQ_WARN}
+
+# sshpass -p 'bandit0' ssh -p 2220 bandit0@bandit.labs.overthewire.org 'bash -s' < bandit0/solve.sh
+
+case "$BANDIT_CMD" in
+	"connect")
+		PSSWD=$(cat "bandit${BANDIT_LVL}/data.txt" 2>/dev/null)
+		[ -z "${PSSWD}" ] && error 1 "Level ${BANDIT_LVL} not solved yet"
+		sshpass -p "${PSSWD}" ssh -p ${BANDIT_PORT} ${BANDIT_USER}@${BANDIT_HOST}
+		;;
+	"solve")
+		PSSWD=$(cat "bandit${BANDIT_LVL}/data.txt" 2>/dev/null)
+		[ -z "${PSSWD}" ] && error 1 "Level ${BANDIT_LVL} not solved yet"
+		SOLVE_SCRIPT="${BANDIT_USER}/solve.sh"
+		if [ -f "${SOLVE_SCRIPT}" ]; then
+			SOLVE_FILE="bandit$((BANDIT_LVL + 1))/data.txt"
+			mkdir -p $(dirname -- "${SOLVE_FILE}")
+			sshpass -p "${PSSWD}" ssh -p ${BANDIT_PORT} ${BANDIT_USER}@${BANDIT_HOST} 'bash -s' < "${SOLVE_SCRIPT}" 2>/dev/null | grep -oEi [A-Z0-9]{32} > "${SOLVE_FILE}"
+		else
+			error 2 "Level ${BANDIT_LVL} don't have solved yet"
+		fi
+		;;
+	*)
+		echo "Invalid command"
+		exit 1
+		;;
+esac
+
