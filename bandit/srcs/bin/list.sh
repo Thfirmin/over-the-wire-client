@@ -2,7 +2,7 @@
 
 BANDIT_LVL=$(ls -d bandit*[0-9] | sed "s/^bandit//g")
 
-for lvl in $BANDIT_LVL; do
+for lvl in {1..33}; do
 	HASPSSWD=$(ls "bandit${lvl}/data.txt" 2>/dev/null)
 	SOLVED=$(ls "bandit${lvl}/solve.sh" 2>/dev/null)
 
